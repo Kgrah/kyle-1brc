@@ -80,7 +80,7 @@ func main() {
 		}()
 	}
 
-	chosenCity := haidarnagar
+  chosenCity := tokyo
 
 	go func() {
 		for {
