@@ -23,28 +23,8 @@ var totalProcessed int32
 func main() {
 	start := time.Now()
 
-	if len(os.Args) < 3 {
-		fmt.Println("must provide numChunks and measurementPath")
-		return
-	}
-
-	measurementPath := os.Args[2]
-	if measurementPath == "" {
-		fmt.Println("must provide measurementPath")
-		return
-	}
-
-	numChunksArg := os.Args[1]
-	if numChunksArg == "" {
-		fmt.Println("must provide numChunks")
-		return
-	}
-
-	numChunks, err := strconv.Atoi(numChunksArg)
-	if err != nil {
-		fmt.Println("invalid numchunks")
-		return
-	}
+  measurementPath := "measurements.txt"
+  numChunks := 16 
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Println("starting 1brc with", runtime.NumCPU(), "threads")

@@ -5,5 +5,6 @@ import (
 )
 
 func TestMain(t *testing.T) {
+  println("starting test")
 	main()
 }
