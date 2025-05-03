@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"runtime"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -89,14 +88,14 @@ func processChunk(s *stats, fp string, c []int64, wg *sync.WaitGroup) error {
 
 	f.Seek(c[0], io.SeekStart)
 	r := bufio.NewReader(f)
-	var pos = c[0]
 
+	var pos = c[0]
 	for {
 		if pos >= c[1] {
 			break
 		}
 
-		l, err := r.ReadBytes('\n')
+		l, err := r.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -162,7 +161,6 @@ func (s *stats) process(c string, t float64) {
 
 		measurement.sum += t
 		measurement.c++
-
 	} else {
 		s.data.Store(c, &measurement{
 			min:  t,
@@ -190,12 +188,7 @@ func splitMeasurement(line string) (string, float64, error) {
 	for i := range len(line) {
 		if line[i] == ';' {
 			c, tString := line[:i], line[i+1:]
-
-			t, err := strconv.ParseFloat(tString, 64)
-			if err != nil {
-				return "", 0, fmt.Errorf("error splitting line: %w", err)
-			}
-
+      t := fastParseFloat(tString)
 			return c, t, nil
 		}
 	}
@@ -238,3 +231,40 @@ func getChunkPositions(n int, f *os.File) ([][]int64, error) {
 
 	return chunks, nil
 }
+
+func fastParseFloat(s string) float64 {
+	var neg bool
+	var intPart, fracPart int64
+	var fracDiv float64 = 1
+
+	// Convert string to byte slice for faster indexing
+	b := []byte(s)
+	i := 0
+
+	// Optional sign
+	if b[0] == '-' {
+		neg = true
+		i++
+	}
+
+	// Integer part
+	for ; i < len(b) && b[i] != '.'; i++ {
+		intPart = intPart*10 + int64(b[i]-'0')
+	}
+
+	// Fractional part
+	if i < len(b) && b[i] == '.' {
+		i++
+		for ; i < len(b); i++ {
+			fracPart = fracPart*10 + int64(b[i]-'0')
+			fracDiv *= 10
+		}
+	}
+
+	result := float64(intPart) + float64(fracPart)/fracDiv
+	if neg {
+		result = -result
+	}
+	return result
+}
+
