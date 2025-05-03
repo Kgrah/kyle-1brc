@@ -40,22 +40,24 @@ func main() {
 		return
 	}
 
-	var sm sync.Map
-
-	s := stats{
-		data: &sm,
-	}
-
 	var wg sync.WaitGroup
 	wg.Add(numChunks)
 
+  statsChan := make(chan *stats)
 	for _, c := range chunks {
 		go func() {
-			err := processChunk(&s, measurementPath, c, &wg)
+	    s := &stats{
+        data: make(map[string]*measurement),
+      }
+
+			err := processChunk(s, measurementPath, c, &wg)
 			if err != nil {
 				fmt.Println("error processing chunk: ", err)
 				return
 			}
+
+      s.finalize()
+      statsChan <- s
 		}()
 	}
 
@@ -66,14 +68,22 @@ func main() {
 			fmt.Println(time.Since(start))
 			time.Sleep(time.Second * 5)
 			fmt.Println("progress: ", float64(totalProcessed)/float64(billion)*100, "%")
-			s.print(chosenCity)
 		}
 	}()
 
 	wg.Wait()
 
-	s.finalize()
-	s.print(chosenCity)
+  var out []*stats
+  for s := range statsChan {
+    out = append(out, s)
+  }
+
+  merged := &stats{
+    data: make(map[string]*measurement),
+  }
+  mergeStats(merged, out)
+
+	merged.print(chosenCity)
 	fmt.Println("final elapsed time: ", time.Since(start))
 }
 
@@ -127,61 +137,54 @@ type measurement struct {
 }
 
 type stats struct {
-	data *sync.Map
+	data map[string]*measurement
 }
 
 func (s *stats) print(c string) {
 	if c != "" {
-		if m, ok := s.data.Load(c); ok {
-			measurement := m.(*measurement)
-			fmt.Printf("%s=%.1f/%.1f/%.1f/%.1f\n", c, measurement.min, measurement.mean, measurement.max, measurement.c)
-		}
+    if m, ok := s.data[c]; ok {
+			fmt.Printf("%s=%.1f/%.1f/%.1f/%.1f\n", c, m.min, m.mean, m.max, m.c)
+    }
+
 		return
 	}
 
-	s.data.Range(func(key, value interface{}) bool {
-		measurement := value.(*measurement)
-		fmt.Printf("%s=%.1f/%.1f/%.1f\n", key, measurement.min, measurement.mean, measurement.max)
-		return true
-	})
+  for c, m := range s.data {
+		fmt.Printf("%s=%.1f/%.1f/%.1f\n", c, m.min, m.mean, m.max)
+  }
 }
 
 func (s *stats) process(c string, t float64) {
-	m, loaded := s.data.Load(c)
+  if m, ok := s.data[c]; ok {
+    if t > m.max {
+      m.max = t
+    }
 
-	if loaded {
-		measurement := m.(*measurement)
+    if t < m.min {
+      m.min = t
+    }
 
-		if t > measurement.max {
-			measurement.max = t
-		}
-		if t < measurement.min {
-			measurement.min = t
-		}
-
-		measurement.sum += t
-		measurement.c++
-	} else {
-		s.data.Store(c, &measurement{
-			min:  t,
-			max:  t,
-			sum:  t,
-			c:    1,
-			mean: 0, // will be set later in finalize()
-		})
-	}
+    m.sum += t
+    m.c++
+  } else {
+    s.data[c] = &measurement{
+      min: t,
+      max: t,
+      sum: t,
+      c: 1,
+      mean: 0,
+    }
+  }
 
 	atomic.AddInt32(&totalProcessed, 1)
 }
 
 func (s *stats) finalize() {
-	s.data.Range(func(key, value interface{}) bool {
-		measurement := value.(*measurement)
-		if measurement.c != 0 {
-			measurement.mean = measurement.sum / measurement.c
-		}
-		return true
-	})
+  for _, m := range s.data {
+    if m.c != 0 {
+      m.mean = m.sum / m.c
+    }
+  }
 }
 
 func splitMeasurement(line string) (string, float64, error) {
@@ -266,5 +269,20 @@ func fastParseFloat(s string) float64 {
 		result = -result
 	}
 	return result
+}
+
+func mergeStats(merged *stats, s []*stats) {
+  for _, s := range s {
+    for c, m := range s.data {
+      if mrg, ok := merged.data[c]; ok {
+        mrg.sum += m.sum
+        mrg.c += m.c
+        mrg.max = max(mrg.max, m.max)
+        mrg.min = min(mrg.min, m.min)
+      } else {
+        merged.data[c] = m
+      }
+    }
+  }
 }
 
