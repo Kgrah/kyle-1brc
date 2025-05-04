@@ -134,7 +134,7 @@ type stats struct {
 
 func (s *stats) print(c string) {
 	if c != "" {
-    cHash := fastHash([]byte(c)) 
+    cHash := polyHash([]byte(c)) 
     if m, ok := s.data[cHash]; ok {
 			fmt.Printf("%s=%.1f/%.1f/%.1f/%.1f\n", c, m.min, m.mean, m.max, m.c)
     }
@@ -143,7 +143,7 @@ func (s *stats) print(c string) {
 	}
 
   for _, v := range s.cities {
-    cHash := fastHash([]byte(v))
+    cHash := polyHash([]byte(v))
     c := s.cities[cHash]
     m := s.data[cHash]
 		fmt.Printf("%s=%.1f/%.1f/%.1f\n", c, m.min, m.mean, m.max)
@@ -188,7 +188,7 @@ func splitMeasurement(line []byte) (uint64, float64, []byte) {
 		if line[i] == ';' {
 			c, tBytes := line[:i], line[i+1:]
       t := fastParseFloat(tBytes)
-			return fastHash(c), t, c
+			return polyHash(c), t, c
 		}
 	}
 
@@ -277,11 +277,12 @@ func mergeStats(merged *stats, s []*stats) {
   }
 }
 
-func fastHash(b []byte) uint64 {
-	var h uint64 = 5381 // or any seed
+func polyHash(b []byte) uint64 {
+	var h uint64
 	for _, c := range b {
-		h = (h << 5) + h + uint64(c) // h * 33 + c
+		h = h*31 + uint64(c)
 	}
 	return h
 }
+
 
