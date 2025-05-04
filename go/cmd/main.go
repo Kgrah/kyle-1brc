@@ -47,7 +47,8 @@ func main() {
 	for _, c := range chunks {
 		go func(c []int64) {
 	    s := &stats{
-        data: make(map[string]*measurement),
+        data: make(map[uint64]*measurement),
+        cities: make(map[uint64]string),
       }
 
 			err := processChunk(s, measurementPath, c, &wg)
@@ -85,7 +86,8 @@ func main() {
   }
 
   merged := &stats{
-    data: make(map[string]*measurement),
+    data: make(map[uint64]*measurement),
+    cities: make(map[uint64]string),
   }
   mergeStats(merged, out)
 
@@ -123,12 +125,12 @@ func processChunk(s *stats, fp string, c []int64, wg *sync.WaitGroup) error {
     pos += int64(len(l))
 		l = bytes.TrimRight(l, "\n")
 
-		c, t := splitMeasurement(l)
-		if c == "" {
+		c, t, b := splitMeasurement(l)
+		if c == 0 {
       panic("bad city in line")
     }
 
-		s.process(c, t)
+		s.process(c, t, b)
 	}
 
 	return nil
@@ -142,24 +144,29 @@ type measurement struct {
 }
 
 type stats struct {
-	data map[string]*measurement
+	data map[uint64]*measurement
+  cities map[uint64]string
 }
 
 func (s *stats) print(c string) {
 	if c != "" {
-    if m, ok := s.data[c]; ok {
+    cHash := fastHash([]byte(c)) 
+    if m, ok := s.data[cHash]; ok {
 			fmt.Printf("%s=%.1f/%.1f/%.1f/%.1f\n", c, m.min, m.mean, m.max, m.c)
     }
 
 		return
 	}
 
-  for c, m := range s.data {
+  for _, v := range s.cities {
+    cHash := fastHash([]byte(v))
+    c := s.cities[cHash]
+    m := s.data[cHash]
 		fmt.Printf("%s=%.1f/%.1f/%.1f\n", c, m.min, m.mean, m.max)
-  }
+  } 
 }
 
-func (s *stats) process(c string, t float64) {
+func (s *stats) process(c uint64, t float64, b []byte) {
   if m, ok := s.data[c]; ok {
     if t > m.max {
       m.max = t
@@ -179,6 +186,8 @@ func (s *stats) process(c string, t float64) {
       c: 1,
       mean: 0,
     }
+
+    s.cities[c] = string(b)
   }
 
 	atomic.AddInt32(&totalProcessed, 1)
@@ -192,16 +201,16 @@ func (s *stats) finalize() {
   }
 }
 
-func splitMeasurement(line []byte) (string, float64) {
+func splitMeasurement(line []byte) (uint64, float64, []byte) {
 	for i := range len(line) {
 		if line[i] == ';' {
-			c, tString := line[:i], line[i+1:]
-      t := fastParseFloat(tString)
-			return string(c), t
+			c, tBytes := line[:i], line[i+1:]
+      t := fastParseFloat(tBytes)
+			return fastHash(c), t, c
 		}
 	}
 
-	return "", 0
+	return 0, 0, nil
 }
 
 func getChunkPositions(n int, f *os.File) ([][]int64, error) {
@@ -288,6 +297,22 @@ func mergeStats(merged *stats, s []*stats) {
         merged.data[c] = m
       }
     }
+
+    for ch, c := range s.cities {
+      if _, ok := merged.cities[ch]; ok {
+        continue
+      }
+
+      merged.cities[ch] = c
+    }
   }
+}
+
+func fastHash(b []byte) uint64 {
+	var h uint64 = 5381 // or any seed
+	for _, c := range b {
+		h = (h << 5) + h + uint64(c) // h * 33 + c
+	}
+	return h
 }
 
