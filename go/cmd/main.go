@@ -123,10 +123,10 @@ func processChunk(s *stats, fp string, c []int64, wg *sync.WaitGroup) error {
     pos += int64(len(l))
 		l = bytes.TrimRight(l, "\n")
 
-		c, t, err := splitMeasurement(l)
-		if err != nil {
-			return fmt.Errorf("error splitting measurement %w", err)
-		}
+		c, t := splitMeasurement(l)
+		if c == "" {
+      panic("bad city in line")
+    }
 
 		s.process(c, t)
 	}
@@ -192,16 +192,16 @@ func (s *stats) finalize() {
   }
 }
 
-func splitMeasurement(line []byte) (string, float64, error) {
+func splitMeasurement(line []byte) (string, float64) {
 	for i := range len(line) {
 		if line[i] == ';' {
 			c, tString := line[:i], line[i+1:]
       t := fastParseFloat(tString)
-			return string(c), t, nil
+			return string(c), t
 		}
 	}
 
-	return "", 0, fmt.Errorf("error splitting line: no line break found")
+	return "", 0
 }
 
 func getChunkPositions(n int, f *os.File) ([][]int64, error) {
