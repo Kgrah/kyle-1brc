@@ -43,9 +43,9 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(numChunks)
 
-  statsChan := make(chan *stats)
+  statsChan := make(chan *stats, numChunks)
 	for _, c := range chunks {
-		go func() {
+		go func(c []int64) {
 	    s := &stats{
         data: make(map[string]*measurement),
       }
@@ -58,7 +58,7 @@ func main() {
 
       s.finalize()
       statsChan <- s
-		}()
+		}(c)
 	}
 
   chosenCity := tokyo
@@ -66,12 +66,18 @@ func main() {
 	go func() {
 		for {
 			fmt.Println(time.Since(start))
+      progress := float64(totalProcessed)/float64(billion)*100
+      fmt.Println("progress: ", progress, "%")
 			time.Sleep(time.Second * 5)
-			fmt.Println("progress: ", float64(totalProcessed)/float64(billion)*100, "%")
+      if progress == 100 {
+        return
+      } 
 		}
 	}()
 
+
 	wg.Wait()
+  close(statsChan)
 
   var out []*stats
   for s := range statsChan {
@@ -114,9 +120,8 @@ func processChunk(s *stats, fp string, c []int64, wg *sync.WaitGroup) error {
 			return fmt.Errorf("error finding line in chunk: %w", err)
 		}
 
+    pos += int64(len(l))
 		l = bytes.TrimRight(l, "\n")
-
-		pos += int64(len(l))
 
 		c, t, err := splitMeasurement(string(l))
 		if err != nil {
