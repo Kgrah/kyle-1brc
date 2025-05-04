@@ -8,7 +8,6 @@ import (
 	"os"
 	"runtime"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -16,8 +15,6 @@ const haidarnagar = "Haidarnagar"
 const tokyo = "Tokyo"
 
 var billion = 1000000000
-
-var totalProcessed int32
 
 func main() {
 	start := time.Now()
@@ -46,6 +43,8 @@ func main() {
   statsChan := make(chan *stats, numChunks)
 	for _, c := range chunks {
 		go func(c []int64) {
+      defer wg.Done()
+
 	    s := &stats{
         data: make(map[uint64]*measurement),
         cities: make(map[uint64]string),
@@ -63,19 +62,6 @@ func main() {
 	}
 
   chosenCity := tokyo
-
-	go func() {
-		for {
-			fmt.Println(time.Since(start))
-      progress := float64(totalProcessed)/float64(billion)*100
-      fmt.Println("progress: ", progress, "%")
-			time.Sleep(time.Second * 5)
-      if progress == 100 {
-        return
-      } 
-		}
-	}()
-
 
 	wg.Wait()
   close(statsChan)
@@ -96,8 +82,6 @@ func main() {
 }
 
 func processChunk(s *stats, fp string, c []int64, wg *sync.WaitGroup) error {
-	defer wg.Done()
-
 	f, err := os.Open(fp)
 	if err != nil {
 		return fmt.Errorf("error processing chunk: %v. err: %w", c, err)
@@ -189,8 +173,6 @@ func (s *stats) process(c uint64, t float64, b []byte) {
 
     s.cities[c] = string(b)
   }
-
-	atomic.AddInt32(&totalProcessed, 1)
 }
 
 func (s *stats) finalize() {
