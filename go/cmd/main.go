@@ -231,21 +231,11 @@ func getChunkPositions(n int, f *os.File) ([][]int64, error) {
 	return chunks, nil
 }
 
-func fastParseFloat(s []byte) float64 {
-	var neg bool
+func fastParseFloat(b []byte) float64 {
 	var intPart, fracPart int64
 	var fracDiv float64 = 1
 
-	// Convert string to byte slice for faster indexing
-	b := []byte(s)
 	i := 0
-
-	// Optional sign
-	if b[0] == '-' {
-		neg = true
-		i++
-	}
-
 	// Integer part
 	for ; i < len(b) && b[i] != '.'; i++ {
 		intPart = intPart*10 + int64(b[i]-'0')
@@ -261,9 +251,6 @@ func fastParseFloat(s []byte) float64 {
 	}
 
 	result := float64(intPart) + float64(fracPart)/fracDiv
-	if neg {
-		result = -result
-	}
 	return result
 }
 
