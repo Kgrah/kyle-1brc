@@ -19,8 +19,8 @@ var billion = 1000000000
 func main() {
 	start := time.Now()
 
-  measurementPath := "measurements.txt"
-  numChunks := 16 
+	measurementPath := "measurements.txt"
+	numChunks := 16
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Println("starting 1brc with", runtime.NumCPU(), "threads")
@@ -40,15 +40,15 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(numChunks)
 
-  statsChan := make(chan *stats, numChunks)
+	statsChan := make(chan *stats, numChunks)
 	for _, c := range chunks {
 		go func(c []int64) {
-      defer wg.Done()
+			defer wg.Done()
 
-	    s := &stats{
-        data: make(map[uint64]*measurement),
-        cities: make(map[uint64]string),
-      }
+			s := &stats{
+				data:   make(map[uint64]*measurement),
+				cities: make(map[uint64]string),
+			}
 
 			err := processChunk(s, measurementPath, c, &wg)
 			if err != nil {
@@ -56,26 +56,26 @@ func main() {
 				return
 			}
 
-      s.finalize()
-      statsChan <- s
+			s.finalize()
+			statsChan <- s
 		}(c)
 	}
 
-  chosenCity := tokyo
+	chosenCity := tokyo
 
 	wg.Wait()
-  close(statsChan)
+	close(statsChan)
 
-  var out []*stats
-  for s := range statsChan {
-    out = append(out, s)
-  }
+	var out []*stats
+	for s := range statsChan {
+		out = append(out, s)
+	}
 
-  merged := &stats{
-    data: make(map[uint64]*measurement),
-    cities: make(map[uint64]string),
-  }
-  mergeStats(merged, out)
+	merged := &stats{
+		data:   make(map[uint64]*measurement),
+		cities: make(map[uint64]string),
+	}
+	mergeStats(merged, out)
 
 	merged.print(chosenCity)
 	fmt.Println("final elapsed time: ", time.Since(start))
@@ -106,13 +106,13 @@ func processChunk(s *stats, fp string, c []int64, wg *sync.WaitGroup) error {
 			return fmt.Errorf("error finding line in chunk: %w", err)
 		}
 
-    pos += int64(len(l))
+		pos += int64(len(l))
 		l = bytes.TrimRight(l, "\n")
 
 		c, t, b := splitMeasurement(l)
 		if c == 0 {
-      panic("bad city in line")
-    }
+			panic("bad city in line")
+		}
 
 		s.process(c, t, b)
 	}
@@ -128,66 +128,66 @@ type measurement struct {
 }
 
 type stats struct {
-	data map[uint64]*measurement
-  cities map[uint64]string
+	data   map[uint64]*measurement
+	cities map[uint64]string
 }
 
 func (s *stats) print(c string) {
 	if c != "" {
-    cHash := polyHash([]byte(c)) 
-    if m, ok := s.data[cHash]; ok {
+		cHash := polyHash([]byte(c))
+		if m, ok := s.data[cHash]; ok {
 			fmt.Printf("%s=%.1f/%.1f/%.1f/%.1f\n", c, m.min, m.mean, m.max, m.c)
-    }
+		}
 
 		return
 	}
 
-  for _, v := range s.cities {
-    cHash := polyHash([]byte(v))
-    c := s.cities[cHash]
-    m := s.data[cHash]
+	for _, v := range s.cities {
+		cHash := polyHash([]byte(v))
+		c := s.cities[cHash]
+		m := s.data[cHash]
 		fmt.Printf("%s=%.1f/%.1f/%.1f\n", c, m.min, m.mean, m.max)
-  } 
+	}
 }
 
 func (s *stats) process(c uint64, t float64, b []byte) {
-  if m, ok := s.data[c]; ok {
-    if t > m.max {
-      m.max = t
-    }
+	if m, ok := s.data[c]; ok {
+		if t > m.max {
+			m.max = t
+		}
 
-    if t < m.min {
-      m.min = t
-    }
+		if t < m.min {
+			m.min = t
+		}
 
-    m.sum += t
-    m.c++
-  } else {
-    s.data[c] = &measurement{
-      min: t,
-      max: t,
-      sum: t,
-      c: 1,
-      mean: 0,
-    }
+		m.sum += t
+		m.c++
+	} else {
+		s.data[c] = &measurement{
+			min:  t,
+			max:  t,
+			sum:  t,
+			c:    1,
+			mean: 0,
+		}
 
-    s.cities[c] = string(b)
-  }
+		s.cities[c] = string(b)
+	}
 }
 
 func (s *stats) finalize() {
-  for _, m := range s.data {
-    if m.c != 0 {
-      m.mean = m.sum / m.c
-    }
-  }
+	for _, m := range s.data {
+		if m.c != 0 {
+			m.mean = m.sum / m.c
+		}
+	}
 }
 
 func splitMeasurement(line []byte) (uint64, float64, []byte) {
 	for i := range len(line) {
 		if line[i] == ';' {
 			c, tBytes := line[:i], line[i+1:]
-      t := fastParseFloat(tBytes)
+			t := fastParseFloat(tBytes)
 			return polyHash(c), t, c
 		}
 	}
@@ -255,26 +255,26 @@ func fastParseFloat(b []byte) float64 {
 }
 
 func mergeStats(merged *stats, s []*stats) {
-  for _, s := range s {
-    for c, m := range s.data {
-      if mrg, ok := merged.data[c]; ok {
-        mrg.sum += m.sum
-        mrg.c += m.c
-        mrg.max = max(mrg.max, m.max)
-        mrg.min = min(mrg.min, m.min)
-      } else {
-        merged.data[c] = m
-      }
-    }
+	for _, s := range s {
+		for c, m := range s.data {
+			if mrg, ok := merged.data[c]; ok {
+				mrg.sum += m.sum
+				mrg.c += m.c
+				mrg.max = max(mrg.max, m.max)
+				mrg.min = min(mrg.min, m.min)
+			} else {
+				merged.data[c] = m
+			}
+		}
 
-    for ch, c := range s.cities {
-      if _, ok := merged.cities[ch]; ok {
-        continue
-      }
+		for ch, c := range s.cities {
+			if _, ok := merged.cities[ch]; ok {
+				continue
+			}
 
-      merged.cities[ch] = c
-    }
-  }
+			merged.cities[ch] = c
+		}
+	}
 }
 
 func polyHash(b []byte) uint64 {
@@ -284,5 +284,3 @@ func polyHash(b []byte) uint64 {
 	}
 	return h
 }
-
-
