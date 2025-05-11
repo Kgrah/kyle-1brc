@@ -232,16 +232,21 @@ func getChunkPositions(n int) ([][]int64, error) {
 }
 
 func fastParseFloat(b []byte) float64 {
+	var neg bool
 	var intPart, fracPart int64
 	var fracDiv float64 = 1
 
 	i := 0
-	// Integer part
+
+	if b[0] == '-' {
+		neg = true
+		i++
+	}
+
 	for ; i < len(b) && b[i] != '.'; i++ {
 		intPart = intPart*10 + int64(b[i]-'0')
 	}
 
-	// Fractional part
 	if i < len(b) && b[i] == '.' {
 		i++
 		for ; i < len(b); i++ {
@@ -251,6 +256,10 @@ func fastParseFloat(b []byte) float64 {
 	}
 
 	result := float64(intPart) + float64(fracPart)/fracDiv
+	if neg {
+		result = -result
+	}
+
 	return result
 }
 
