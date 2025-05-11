@@ -1,0 +1,110 @@
+# 1brc/cmd
+./main.go:197:2: can inline getChunkPositions.deferwrap1
+./main.go:280:6: can inline polyHash
+./main.go:147:6: can inline (*stats).process
+./main.go:83:2: can inline processChunk.deferwrap1
+./main.go:172:6: can inline (*stats).finalize
+./main.go:40:4: can inline main.func1.deferwrap1
+./main.go:39:3: can inline main.gowrap1
+/usr/local/go/src/sync/atomic/type.go:63:6: can inline atomic.(*Pointer[go.shape.struct { os.mu sync.Mutex; os.buf *[]uint8; os.nbuf int; os.bufp int }]).CompareAndSwap
+/usr/local/go/src/sync/atomic/type.go:60:6: can inline atomic.(*Pointer[go.shape.struct { os.mu sync.Mutex; os.buf *[]uint8; os.nbuf int; os.bufp int }]).Swap
+/usr/local/go/src/sync/atomic/type.go:57:6: can inline atomic.(*Pointer[go.shape.struct { os.mu sync.Mutex; os.buf *[]uint8; os.nbuf int; os.bufp int }]).Store
+/usr/local/go/src/sync/atomic/type.go:54:6: can inline atomic.(*Pointer[go.shape.struct { os.mu sync.Mutex; os.buf *[]uint8; os.nbuf int; os.bufp int }]).Load
+/usr/local/go/src/sync/atomic/type.go:63:6: can inline atomic.(*Pointer[os.dirInfo]).CompareAndSwap
+/usr/local/go/src/sync/atomic/type.go:60:6: can inline atomic.(*Pointer[os.dirInfo]).Swap
+/usr/local/go/src/sync/atomic/type.go:57:6: can inline atomic.(*Pointer[os.dirInfo]).Store
+/usr/local/go/src/sync/atomic/type.go:54:6: can inline atomic.(*Pointer[os.dirInfo]).Load
+./main.go:193:19: inlining call to os.Open
+./main.go:218:29: inlining call to bufio.NewReader
+./main.go:218:29: inlining call to bufio.NewReaderSize
+./main.go:218:29: inlining call to bufio.(*Reader).reset
+./main.go:197:15: inlining call to os.(*File).Close
+./main.go:185:19: inlining call to polyHash
+./main.go:79:19: inlining call to os.Open
+./main.go:86:22: inlining call to bufio.NewReader
+./main.go:111:12: inlining call to (*stats).process
+./main.go:86:22: inlining call to bufio.NewReaderSize
+./main.go:86:22: inlining call to bufio.(*Reader).reset
+./main.go:83:15: inlining call to os.(*File).Close
+./main.go:131:20: inlining call to polyHash
+./main.go:133:14: inlining call to fmt.Printf
+./main.go:140:20: inlining call to polyHash
+./main.go:143:13: inlining call to fmt.Printf
+./main.go:25:35: inlining call to runtime.NumCPU
+./main.go:26:50: inlining call to runtime.NumCPU
+./main.go:26:13: inlining call to fmt.Println
+./main.go:30:14: inlining call to fmt.Println
+./main.go:75:13: inlining call to fmt.Println
+./main.go:49:16: inlining call to fmt.Println
+./main.go:53:14: inlining call to (*stats).finalize
+./main.go:40:17: inlining call to sync.(*WaitGroup).Done
+/usr/local/go/src/sync/atomic/type.go:63:6: inlining call to atomic.(*Pointer[go.shape.struct { os.mu sync.Mutex; os.buf *[]uint8; os.nbuf int; os.bufp int }]).CompareAndSwap
+/usr/local/go/src/sync/atomic/type.go:60:6: inlining call to atomic.(*Pointer[go.shape.struct { os.mu sync.Mutex; os.buf *[]uint8; os.nbuf int; os.bufp int }]).Swap
+/usr/local/go/src/sync/atomic/type.go:57:6: inlining call to atomic.(*Pointer[go.shape.struct { os.mu sync.Mutex; os.buf *[]uint8; os.nbuf int; os.bufp int }]).Store
+/usr/local/go/src/sync/atomic/type.go:54:6: inlining call to atomic.(*Pointer[go.shape.struct { os.mu sync.Mutex; os.buf *[]uint8; os.nbuf int; os.bufp int }]).Load
+./main.go:195:25: ... argument does not escape
+./main.go:201:25: ... argument does not escape
+./main.go:207:16: make([][]int64, 0, n) escapes to heap
+./main.go:218:29: new(bufio.Reader) does not escape
+./main.go:218:29: make([]byte, max(bufio.size, 16)) escapes to heap
+./main.go:221:27: ... argument does not escape
+./main.go:227:34: []int64{...} escapes to heap
+./main.go:234:21: b does not escape
+./main.go:180:23: leaking param: line to result ~r2 level=0
+./main.go:78:19: s does not escape
+./main.go:78:29: leaking param: fp
+./main.go:78:40: leaking param: c
+./main.go:78:51: wg does not escape
+./main.go:81:20: ... argument does not escape
+./main.go:81:60: c escapes to heap
+./main.go:86:22: new(bufio.Reader) does not escape
+./main.go:86:22: make([]byte, max(bufio.size, 16)) escapes to heap
+./main.go:100:21: ... argument does not escape
+./main.go:108:10: "bad city in line" escapes to heap
+./main.go:111:12: &measurement{...} escapes to heap
+./main.go:111:12: string(b) escapes to heap
+./main.go:257:17: merged does not escape
+./main.go:257:32: leaking param content: s
+./main.go:129:7: s does not escape
+./main.go:129:23: leaking param: c
+./main.go:131:28: ([]byte)(c) does not escape
+./main.go:131:28: zero-copy string->[]byte conversion
+./main.go:133:14: ... argument does not escape
+./main.go:133:43: c escapes to heap
+./main.go:133:47: m.min escapes to heap
+./main.go:133:54: m.mean escapes to heap
+./main.go:133:62: m.max escapes to heap
+./main.go:133:69: m.c escapes to heap
+./main.go:140:28: ([]byte)(v) does not escape
+./main.go:140:28: zero-copy string->[]byte conversion
+./main.go:143:13: ... argument does not escape
+./main.go:143:37: c escapes to heap
+./main.go:143:41: m.min escapes to heap
+./main.go:143:48: m.mean escapes to heap
+./main.go:143:56: m.max escapes to heap
+./main.go:39:11: leaking param: c
+./main.go:34:6: moved to heap: wg
+./main.go:26:13: ... argument does not escape
+./main.go:26:14: "starting 1brc with" escapes to heap
+./main.go:26:50: ~r0 escapes to heap
+./main.go:26:54: "threads" escapes to heap
+./main.go:30:14: ... argument does not escape
+./main.go:30:15: "error getting chunk positions:" escapes to heap
+./main.go:39:6: func literal escapes to heap
+./main.go:42:9: &stats{...} escapes to heap
+./main.go:43:17: make(map[uint64]*measurement) escapes to heap
+./main.go:44:17: make(map[uint64]string) escapes to heap
+./main.go:49:16: ... argument does not escape
+./main.go:49:17: "error processing chunk: " escapes to heap
+./main.go:68:12: &stats{...} does not escape
+./main.go:69:15: make(map[uint64]*measurement) does not escape
+./main.go:70:15: make(map[uint64]string) does not escape
+./main.go:75:13: ... argument does not escape
+./main.go:75:14: "final elapsed time: " escapes to heap
+./main.go:75:48: time.Since(start) escapes to heap
+./main.go:147:7: s does not escape
+./main.go:147:46: b does not escape
+./main.go:160:15: &measurement{...} escapes to heap
+./main.go:168:24: string(b) escapes to heap
+./main.go:172:7: s does not escape
+./main.go:280:15: b does not escape
