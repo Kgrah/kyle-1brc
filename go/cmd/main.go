@@ -44,7 +44,7 @@ func main() {
 				cities: make(map[uint64]string),
 			}
 
-			err := processChunk(s, measurementPath, c, &wg)
+			err := processChunk(s, measurementPath, c)
 			if err != nil {
 				fmt.Println("error processing chunk: ", err)
 				return
@@ -75,7 +75,7 @@ func main() {
 	fmt.Println("final elapsed time: ", time.Since(start))
 }
 
-func processChunk(s *stats, fp string, c []int64, wg *sync.WaitGroup) error {
+func processChunk(s *stats, fp string, c []int64) error {
 	f, err := os.Open(fp)
 	if err != nil {
 		return fmt.Errorf("error processing chunk: %v. err: %w", c, err)
